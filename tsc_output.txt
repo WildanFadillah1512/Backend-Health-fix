@@ -1,0 +1,5 @@
+src/config/firebase.ts(1,19): error TS2307: Cannot find module 'firebase-admin' or its corresponding type declarations.
+src/controllers/notificationController.ts(35,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/workoutController.ts(25,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.

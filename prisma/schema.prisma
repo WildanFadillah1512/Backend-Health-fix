@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  firebaseUid     String   @unique
+  email           String   @unique
+  name            String
+  // Physical Stats
+  weight          Float
+  height          Float
+  age             Int
+  gender          String
+  goal            String
+  activityLevel   String
+  targetWeight    Float
+  
+  // Gamification
+  xp              Int      @default(0)
+  level           Int      @default(1)
+  currentStreak   Int      @default(0)
+  longestStreak   Int      @default(0)
+  
+  // Meta
+  hasOnboarded    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  preferences     UserPreferences?
+  notifications   Notification[]
+  chatHistory     ChatSession[]
+  completedWorkouts CompletedWorkout[]
+  meals           Meal[]
+  dailyStats      DailyStats[]
+  achievements    UserAchievement[]
+  programs        UserProgram[]
+  customWorkouts  CustomWorkout[]
+  workoutProgress WorkoutProgress[]
+}
+
+model UserPreferences {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id])
+  
+  weightUnit      String  @default("kg")
+  heightUnit      String  @default("cm")
+  workoutReminder Boolean @default(true)
+  reminderTime    String?
+  dailyGoalAlert  Boolean @default(true)
+  theme           String  @default("dark")
+  
+  updatedAt       DateTime @updatedAt
+}
+
+model Workout {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  category    String
+  difficulty  String
+  duration    Int
+  calories    Int
+  icon        String
+  
+  thumbnailUrl String?
+  videoUrl    String?
+  
+  isActive    Boolean  @default(true)
+  isPremium   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  exercises   Exercise[]
+  completedWorkouts CompletedWorkout[]
+  programWorkouts   ProgramWorkout[]
+}
+
+model Exercise {
+  id           String  @id @default(uuid())
+  workoutId    String
+  workout      Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  
+  name         String
+  sets         Int
+  reps         String?
+  duration     Int?
+  rest         Int
+  instructions String?
+  videoUrl     String?
+  order        Int
+  
+  @@index([workoutId])
+}
+
+model CustomWorkout {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  title       String
+  description String?
+  category    String
+  duration    Int
+  exercises   Json
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model Recipe {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  calories    Int
+  protein     Float
+  carbs       Float
+  fat         Float
+  imageUrl    String?
+  ingredients String   // Text or JSON
+  instructions String  // Text or JSON
+  isPremium   Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   // 'reminder', 'system', 'recipe_suggestion'
+  data      Json?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model ChatSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String?
+  startedAt DateTime @default(now())
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+  sender    String      // 'user' | 'ai'
+  text      String
+  timestamp DateTime    @default(now())
+}
+
+model CompletedWorkout {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  workoutId  String
+  workout    Workout  @relation(fields: [workoutId], references: [id])
+  date       DateTime @default(now())
+  duration   Int
+  calories   Int
+  syncedAt   DateTime?
+  
+  @@index([userId, date])
+}
+
+model Meal {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  calories  Int
+  protein   Float
+  carbs     Float
+  fat       Float
+  time      DateTime
+  image     String?
+  syncedAt  DateTime?
+  
+  @@index([userId, time])
+}
+
+model DailyStats {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime
+  calories  Int      @default(0)
+  minutes   Int      @default(0)
+  workouts  Int      @default(0)
+  water     Int      @default(0)
+  sleep     Float    @default(0)
+  syncedAt  DateTime?
+  
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model WorkoutProgram {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  duration    Int
+  difficulty  String
+  goal        String
+  isPremium   Boolean  @default(false)
+  thumbnailUrl String?
+  createdAt   DateTime @default(now())
+  
+  workouts    ProgramWorkout[]
+  enrollments UserProgram[]
+}
+
+model ProgramWorkout {
+  id         String         @id @default(uuid())
+  programId  String
+  program    WorkoutProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  workoutId  String
+  workout    Workout        @relation(fields: [workoutId], references: [id])
+  weekNumber Int
+  dayNumber  Int
+  
+  @@index([programId])
+}
+
+model UserProgram {
+  id         String         @id @default(uuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id])
+  programId  String
+  program    WorkoutProgram @relation(fields: [programId], references: [id])
+  startDate  DateTime
+  currentWeek Int           @default(1)
+  isCompleted Boolean       @default(false)
+  
+  @@index([userId])
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  icon        String
+  requirement String
+  category    String
+  
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+  
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model WorkoutProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  exerciseName String
+  maxWeight    Float?
+  maxReps      Int?
+  date         DateTime @default(now())
+  
+  @@index([userId, exerciseName])
+}
+
+model SystemSettings {
+  id              String  @id @default("config")
+  minAppVersion   String  @default("1.0.0")
+  maintenanceMode Boolean @default(false)
+  maintenanceMsg  String?
+}
