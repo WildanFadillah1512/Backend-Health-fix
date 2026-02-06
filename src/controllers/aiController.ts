@@ -17,7 +17,7 @@ export const chat = async (req: AuthRequest, res: Response) => {
                 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
             },
             body: JSON.stringify({
-                model: 'llama3-70b-8192', // or another available model
+                model: 'llama-3.3-70b-versatile', // Updated to supported model
                 messages: [
                     {
                         role: 'system',
