@@ -40,7 +40,8 @@
     "expo-server-sdk": "^5.0.0",
     "express": "^5.2.1",
     "firebase-admin": "^13.6.1",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "node-cron": "^4.2.1"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
