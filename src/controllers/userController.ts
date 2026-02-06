@@ -207,3 +207,36 @@ export const updatePreferences = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Failed to update preferences' });
     }
 };
+
+// Get Daily Stats History
+export const getDailyStatsHistory = async (req: AuthRequest, res: Response) => {
+    try {
+        const { uid } = req.user!;
+        const days = parseInt(req.query.days as string) || 30;
+
+        const user = await prisma.user.findUnique({
+            where: { firebaseUid: uid }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        startDate.setHours(0, 0, 0, 0);
+
+        const stats = await prisma.dailyStats.findMany({
+            where: {
+                userId: user.id,
+                date: { gte: startDate }
+            },
+            orderBy: { date: 'asc' }
+        });
+
+        res.json(stats);
+    } catch (error) {
+        console.error('Get Daily Stats History Error:', error);
+        res.status(500).json({ error: 'Failed to fetch stats history' });
+    }
+};

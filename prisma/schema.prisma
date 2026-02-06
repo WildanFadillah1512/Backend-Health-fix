@@ -33,6 +33,7 @@ model User {
   
   // Meta
   hasOnboarded    Boolean  @default(false)
+  avatarUrl       String?  // Profile photo URL
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   pushToken       String?  // For Expo Push Notifications

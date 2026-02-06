@@ -50,6 +50,43 @@ const upload = multer({
 });
 
 /**
+ * Upload profile photo
+ * POST /api/upload/profile
+ */
+router.post('/profile', authenticate, upload.single('photo'), async (req: Request, res: Response) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const { uid } = (req as any).user;
+        const photoUrl = `/uploads/${req.file.filename}`;
+
+        // Import PrismaClient to update user avatarUrl
+        const { PrismaClient } = await import('@prisma/client');
+        const prisma = new PrismaClient();
+
+        // Update user avatarUrl in database
+        await prisma.user.update({
+            where: { firebaseUid: uid },
+            data: { avatarUrl: photoUrl }
+        });
+
+        await prisma.$disconnect();
+
+        res.json({
+            success: true,
+            photoUrl,
+            filename: req.file.filename,
+            size: req.file.size
+        });
+    } catch (error) {
+        console.error('Error uploading profile photo:', error);
+        res.status(500).json({ error: 'Failed to upload photo' });
+    }
+});
+
+/**
  * Upload progress photo
  * POST /api/upload/progress-photo
  */

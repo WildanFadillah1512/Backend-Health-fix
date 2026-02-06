@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { sendPushNotification } from '../utils/pushNotifications';
 
 const prisma = new PrismaClient();
 
@@ -60,5 +61,57 @@ export const savePushToken = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Save Push Token Error:', error);
         res.status(500).json({ error: 'Failed to save push token' });
+    }
+};
+
+// Create Notification
+export const createNotification = async (req: AuthRequest, res: Response) => {
+    try {
+        const { uid } = req.user!;
+        const { title, message, type = 'info' } = req.body;
+
+        if (!title || !message) {
+            return res.status(400).json({ error: 'Title and message required' });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { firebaseUid: uid }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Create notification in database
+        const notification = await prisma.notification.create({
+            data: {
+                userId: user.id,
+                title,
+                message,
+                type,
+                read: false
+            }
+        });
+
+        // Send push notification if user has token
+        if (user.pushToken) {
+            try {
+                await sendPushNotification(
+                    user.pushToken,
+                    title,
+                    message,
+                    { notificationId: notification.id, type }
+                );
+                console.log(`✅ Push notification sent to user ${user.name}`);
+            } catch (error) {
+                console.error('❌ Failed to send push notification:', error);
+                // Don't fail the request if push fails
+            }
+        }
+
+        res.json(notification);
+    } catch (error) {
+        console.error('Create Notification Error:', error);
+        res.status(500).json({ error: 'Failed to create notification' });
     }
 };
