@@ -10,33 +10,43 @@ export const syncProfile = async (req: AuthRequest, res: Response) => {
         const { uid, email } = req.user!;
         const { name, weight, height, age, gender, goal, activityLevel, targetWeight } = req.body;
 
+        console.log('🔄 Syncing Profile:', { uid, email, name, weight, height, age });
+
+        // Safe parsing with fallbacks
+        const parsedWeight = parseFloat(String(weight)) || 0;
+        const parsedHeight = parseFloat(String(height)) || 0;
+        const parsedAge = parseInt(String(age)) || 0;
+        const parsedTargetWeight = parseFloat(String(targetWeight)) || 0;
+
+        // Use placeholder email if missing to avoid unique constraint violation
+        const safeEmail = email || `${uid}@placeholder.com`;
+
         const user = await prisma.user.upsert({
             where: { firebaseUid: uid },
             update: {
-                email: email || "",
-                name,
-                weight: parseFloat(weight),
-                height: parseFloat(height),
-                age: parseInt(age),
-                gender,
-                goal,
-                activityLevel,
-                targetWeight: parseFloat(targetWeight),
+                email: safeEmail,
+                name: name || 'User',
+                weight: parsedWeight,
+                height: parsedHeight,
+                age: parsedAge,
+                gender: gender || 'other',
+                goal: goal || 'maintenance',
+                activityLevel: activityLevel || 'moderate',
+                targetWeight: parsedTargetWeight,
                 hasOnboarded: true
             },
             create: {
                 firebaseUid: uid,
-                email: email || "",
-                name,
-                weight: parseFloat(weight),
-                height: parseFloat(height),
-                age: parseInt(age),
-                gender,
-                goal,
-                activityLevel,
-                targetWeight: parseFloat(targetWeight),
+                email: safeEmail,
+                name: name || 'User',
+                weight: parsedWeight,
+                height: parsedHeight,
+                age: parsedAge,
+                gender: gender || 'other',
+                goal: goal || 'maintenance',
+                activityLevel: activityLevel || 'moderate',
+                targetWeight: parsedTargetWeight,
                 hasOnboarded: true,
-                // Initialize default preferences
                 preferences: {
                     create: {
                         weightUnit: 'kg',
@@ -50,10 +60,16 @@ export const syncProfile = async (req: AuthRequest, res: Response) => {
             }
         });
 
+        console.log('✅ Profile Synced Successfully:', user.id);
         res.json(user);
-    } catch (error) {
-        console.error('Sync Profile Error:', error);
-        res.status(500).json({ error: 'Failed to sync profile' });
+    } catch (error: any) {
+        console.error('❌ Sync Profile Error:', error);
+        // Log specific prisma error
+        if (error.code) {
+            console.error('Prisma Error Code:', error.code);
+            console.error('Prisma Meta:', error.meta);
+        }
+        res.status(500).json({ error: 'Failed to sync profile', details: error.message });
     }
 };
 
