@@ -73,7 +73,7 @@ export const getWaterLogs = async (req: Request, res: Response) => {
             orderBy: { timestamp: 'desc' }
         });
 
-        const total = logs.reduce((sum, log) => sum + log.amount, 0);
+        const total = logs.reduce((sum: number, log: any) => sum + log.amount, 0);
 
         res.json({ logs, total });
     } catch (error) {
