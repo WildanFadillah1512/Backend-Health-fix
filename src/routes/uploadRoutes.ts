@@ -107,7 +107,10 @@ router.post('/meal-image', authenticate, upload.single('photo'), async (req: Req
 router.delete('/:filename', authenticate, async (req: Request, res: Response) => {
     try {
         const { filename } = req.params;
-        const filePath = path.join(__dirname, '../../uploads', filename);
+
+        // Type guard: ensure filename is string, not string[]
+        const fileToDelete = Array.isArray(filename) ? filename[0] : filename;
+        const filePath = path.join(__dirname, '../../uploads', fileToDelete);
 
         // Check if file exists
         if (!fs.existsSync(filePath)) {

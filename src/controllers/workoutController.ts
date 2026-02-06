@@ -35,8 +35,11 @@ export const getWorkoutById = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
 
+        // Type guard: ensure id is string, not string[]
+        const workoutId = Array.isArray(id) ? id[0] : id;
+
         const workout = await prisma.workout.findUnique({
-            where: { id },
+            where: { id: workoutId },
             include: {
                 exercises: {
                     orderBy: { order: 'asc' }
