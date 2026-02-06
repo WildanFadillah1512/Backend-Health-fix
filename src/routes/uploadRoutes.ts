@@ -3,6 +3,9 @@ import { authenticate } from '../middleware/auth';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 const router = Router();
 
@@ -61,10 +64,6 @@ router.post('/profile', authenticate, upload.single('photo'), async (req: Reques
 
         const { uid } = (req as any).user;
         const photoUrl = `/uploads/${req.file.filename}`;
-
-        // Import PrismaClient to update user avatarUrl
-        const { PrismaClient } = await import('@prisma/client');
-        const prisma = new PrismaClient();
 
         // Update user avatarUrl in database
         await prisma.user.update({
