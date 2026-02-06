@@ -40,3 +40,25 @@ export const markRead = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Failed to update notification' });
     }
 };
+
+// Save Push Token
+export const savePushToken = async (req: AuthRequest, res: Response) => {
+    try {
+        const { token } = req.body;
+        const { uid } = req.user!;
+
+        if (!token) {
+            return res.status(400).json({ error: 'Token required' });
+        }
+
+        const user = await prisma.user.update({
+            where: { firebaseUid: uid },
+            data: { pushToken: token }
+        });
+
+        res.json({ message: 'Push token saved', pushToken: user.pushToken });
+    } catch (error) {
+        console.error('Save Push Token Error:', error);
+        res.status(500).json({ error: 'Failed to save push token' });
+    }
+};

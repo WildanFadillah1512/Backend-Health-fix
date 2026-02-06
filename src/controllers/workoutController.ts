@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { checkAndUnlockAchievements } from './achievementController';
 
 const prisma = new PrismaClient();
 
@@ -78,7 +79,9 @@ export const completeWorkout = async (req: AuthRequest, res: Response) => {
                 date: today,
                 calories,
                 minutes: Math.round(duration / 60),
-                workouts: 1
+                workouts: 1,
+                water: 0,
+                sleep: 0
             }
         });
 
@@ -96,6 +99,9 @@ export const completeWorkout = async (req: AuthRequest, res: Response) => {
                 level: newLevel
             }
         });
+
+        // 4. Check and unlock achievements
+        await checkAndUnlockAchievements(user.id);
 
         res.json({ completed, stats, xpGained, newLevel });
     } catch (error) {

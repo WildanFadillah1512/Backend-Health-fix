@@ -23,6 +23,7 @@ model User {
   goal            String
   activityLevel   String
   targetWeight    Float
+  initialWeight   Float?   // Starting weight for progress tracking
   
   // Gamification
   xp              Int      @default(0)
@@ -34,6 +35,9 @@ model User {
   hasOnboarded    Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  pushToken       String?  // For Expo Push Notifications
+  isPremium       Boolean  @default(false)
+  premiumUntil    DateTime?
   
   // Relations
   preferences     UserPreferences?
@@ -46,6 +50,12 @@ model User {
   programs        UserProgram[]
   customWorkouts  CustomWorkout[]
   workoutProgress WorkoutProgress[]
+  waterLogs       WaterLog[]
+  sleepLogs       SleepLog[]
+  workoutRecommendations WorkoutRecommendation[]
+  customFoods     Food[]     @relation("UserCustomFoods")
+  bodyMeasurements BodyMeasurement[]
+  progressPhotos  ProgressPhoto[]
 }
 
 model UserPreferences {
@@ -59,6 +69,7 @@ model UserPreferences {
   reminderTime    String?
   dailyGoalAlert  Boolean @default(true)
   theme           String  @default("dark")
+  calorieGoal     Int     @default(2000)
   
   updatedAt       DateTime @updatedAt
 }
@@ -84,6 +95,7 @@ model Workout {
   exercises   Exercise[]
   completedWorkouts CompletedWorkout[]
   programWorkouts   ProgramWorkout[]
+  workoutRecommendations WorkoutRecommendation[]
 }
 
 model Exercise {
@@ -292,4 +304,87 @@ model SystemSettings {
   minAppVersion   String  @default("1.0.0")
   maintenanceMode Boolean @default(false)
   maintenanceMsg  String?
+}
+
+model Food {
+  id        String   @id @default(uuid())
+  name      String
+  calories  Int
+  protein   Float
+  carbs     Float
+  fat       Float
+  image     String?
+  
+  isSystemFood Boolean  @default(false)  // System-provided or user-created
+  createdBy    String?                   // User ID if user-created, null if system
+  createdByUser User?   @relation("UserCustomFoods", fields: [createdBy], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([createdBy])
+}
+
+model WaterLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int      // ml
+  timestamp DateTime @default(now())
+  
+  @@index([userId, timestamp])
+}
+
+model SleepLog {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  sleepTime      DateTime
+  wakeTime       DateTime
+  totalHours     Float
+  quality        String   // poor/fair/good/excellent
+  interruptions  Int?
+  notes          String?
+  
+  @@index([userId, sleepTime])
+}
+
+model WorkoutRecommendation {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  workoutId   String
+  workout     Workout  @relation(fields: [workoutId], references: [id])
+  reason      String   // Algorithm reason (e.g., "variety", "based_on_goal")
+  createdAt   DateTime @default(now())
+  applied     Boolean  @default(false)  // User started workout or not
+  
+  @@index([userId, createdAt])
+}
+
+model BodyMeasurement {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime @default(now())
+  weight    Float
+  chest     Float?
+  waist     Float?
+  hips      Float?
+  arms      Float?
+  thighs    Float?
+  bodyFat   Float?
+  
+  @@index([userId, date])
+}
+
+model ProgressPhoto {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  photoUrl  String
+  date      DateTime @default(now())
+  notes     String?
+  
+  @@index([userId, date])
 }

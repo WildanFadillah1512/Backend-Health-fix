@@ -133,73 +133,280 @@ const WORKOUTS = [
     }
 ];
 
+
+
+const FOODS = [
+    { id: '1', name: 'Oatmeal & Berries', calories: 320, protein: 12, carbs: 45, fat: 6, image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=500' },
+    { id: '2', name: 'Grilled Chicken Salad', calories: 450, protein: 40, carbs: 12, fat: 20, image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500' },
+    { id: '3', name: 'Salmon & Quinoa', calories: 520, protein: 35, carbs: 40, fat: 22, image: 'https://images.unsplash.com/photo-1467003909585-2f8a7270028d?w=500' },
+    { id: '4', name: 'Greek Yogurt Bowl', calories: 280, protein: 15, carbs: 30, fat: 8, image: 'https://images.unsplash.com/photo-1488477181946-6428a02917aa?w=500' },
+    { id: '5', name: 'Avocado Toast', calories: 340, protein: 10, carbs: 32, fat: 18, image: 'https://images.unsplash.com/photo-1588137372308-15f75323a399?w=500' },
+    { id: '6', name: 'Banana', calories: 105, protein: 1.3, carbs: 27, fat: 0.3, image: 'https://images.unsplash.com/photo-1571771896612-41604a4e4328?w=500' },
+    { id: '7', name: 'Apple', calories: 95, protein: 0.5, carbs: 25, fat: 0.3, image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=500' },
+    { id: '8', name: 'Boiled Egg', calories: 70, protein: 6, carbs: 0.6, fat: 5, image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=500' },
+    { id: '9', name: 'Protein Shake', calories: 150, protein: 25, carbs: 5, fat: 2, image: 'https://images.unsplash.com/photo-1542526369-0245a443c217?w=500' },
+    { id: '10', name: 'Almonds (30g)', calories: 170, protein: 6, carbs: 6, fat: 15, image: 'https://images.unsplash.com/photo-1508061253366-f7da39e6807e?w=500' }
+];
+
+const ACHIEVEMENTS = [
+    // Workout Milestones
+    {
+        id: 'ach-first-workout',
+        title: 'First Steps',
+        description: 'Complete your first workout',
+        icon: 'fitness',
+        requirement: '1 workout completed',
+        category: 'Workout'
+    },
+    {
+        id: 'ach-5-workouts',
+        title: 'Week Warrior',
+        description: 'Complete 5 workouts',
+        icon: 'trophy',
+        requirement: '5 workouts completed',
+        category: 'Workout'
+    },
+    {
+        id: 'ach-10-workouts',
+        title: 'Committed',
+        description: 'Complete 10 workouts',
+        icon: 'medal',
+        requirement: '10 workouts completed',
+        category: 'Workout'
+    },
+    {
+        id: 'ach-20-workouts',
+        title: 'Month Master',
+        description: 'Complete 20 workouts',
+        icon: 'star',
+        requirement: '20 workouts completed',
+        category: 'Workout'
+    },
+    {
+        id: 'ach-50-workouts',
+        title: 'Fitness Legend',
+        description: 'Complete 50 workouts',
+        icon: 'ribbon',
+        requirement: '50 workouts completed',
+        category: 'Workout'
+    },
+    // Streak Achievements
+    {
+        id: 'ach-3-day-streak',
+        title: 'On Fire',
+        description: '3 day workout streak',
+        icon: 'flame',
+        requirement: '3 consecutive days',
+        category: 'Streak'
+    },
+    {
+        id: 'ach-7-day-streak',
+        title: 'Unstoppable',
+        description: '7 day workout streak',
+        icon: 'flame',
+        requirement: '7 consecutive days',
+        category: 'Streak'
+    },
+    // Nutrition Achievements
+    {
+        id: 'ach-first-meal-log',
+        title: 'Nutrition Beginner',
+        description: 'Log your first meal',
+        icon: 'restaurant',
+        requirement: '1 meal logged',
+        category: 'Nutrition'
+    },
+    {
+        id: 'ach-30-meals',
+        title: 'Meal Tracker',
+        description: 'Log 30 meals',
+        icon: 'nutrition',
+        requirement: '30 meals logged',
+        category: 'Nutrition'
+    },
+    // Hydration Achievements
+    {
+        id: 'ach-2500ml-water',
+        title: 'Hydration Hero',
+        description: 'Drink 2500ml water in a day',
+        icon: 'water',
+        requirement: '2500ml in one day',
+        category: 'Hydration'
+    }
+];
+
+// Combine the loops in main or add after workouts
 async function main() {
     console.log('Start seeding...');
     const url = process.env.DATABASE_URL;
-    console.log('DB URL defined:', !!url);
-    // Do not log the actual URL to avoid leaking secrets, but log length/prefix if needed.
-    if (!url) {
-        console.error('DATABASE_URL is not defined!');
-        throw new Error('DATABASE_URL missing');
-    }
+    if (!url) throw new Error('DATABASE_URL missing');
 
+    // --- WORKOUTS ---
     for (const w of WORKOUTS) {
-        console.log(`Upserting workout with id: ${w.id}`);
+        console.log(`Upserting workout ${w.id}`);
+        const workout = await prisma.workout.upsert({
+            where: { id: w.id },
+            update: {
+                title: w.title,
+                description: w.description,
+                category: w.category,
+                difficulty: w.difficulty,
+                duration: w.duration,
+                calories: w.calories,
+                icon: w.icon,
+            },
+            create: {
+                id: w.id,
+                title: w.title,
+                description: w.description,
+                category: w.category,
+                difficulty: w.difficulty,
+                duration: w.duration,
+                calories: w.calories,
+                icon: w.icon,
+                isActive: true
+            }
+        });
 
-        try {
-            const workout = await prisma.workout.upsert({
-                where: { id: w.id },
-                update: {
-                    title: w.title,
-                    description: w.description,
-                    category: w.category,
-                    difficulty: w.difficulty,
-                    duration: w.duration,
-                    calories: w.calories,
-                    icon: w.icon,
-                    isActive: true,
-                    isPremium: false
-                },
-                create: {
-                    id: w.id,
-                    title: w.title,
-                    description: w.description,
-                    category: w.category,
-                    difficulty: w.difficulty,
-                    duration: w.duration,
-                    calories: w.calories,
-                    icon: w.icon,
-                    isActive: true,
-                    isPremium: false
+        await prisma.exercise.deleteMany({ where: { workoutId: workout.id } });
+
+        for (const e of w.exercises) {
+            await prisma.exercise.create({
+                data: {
+                    id: e.id,
+                    workoutId: workout.id,
+                    name: e.name,
+                    sets: e.sets,
+                    reps: e.reps,
+                    duration: e.duration,
+                    rest: e.rest,
+                    order: e.order
                 }
             });
-
-            // Handle exercises
-            await prisma.exercise.deleteMany({
-                where: { workoutId: workout.id }
-            });
-
-            console.log(`Creating ${w.exercises.length} exercises for workout ${w.id}...`);
-
-            for (const e of w.exercises) {
-                await prisma.exercise.create({
-                    data: {
-                        id: e.id,
-                        workoutId: workout.id,
-                        name: e.name,
-                        sets: e.sets,
-                        reps: e.reps,
-                        duration: e.duration,
-                        rest: e.rest,
-                        order: e.order
-                    }
-                });
-            }
-        } catch (innerError: any) {
-            console.error(`Failed to seed workout ${w.id}`);
-            console.error('Error details:', innerError);
-            throw innerError;
         }
+    }
+
+    // --- FOODS ---
+    console.log('Seeding Foods...');
+    for (const f of FOODS) {
+        await prisma.food.upsert({
+            where: { id: f.id },
+            update: {
+                name: f.name,
+                calories: f.calories,
+                protein: f.protein,
+                carbs: f.carbs,
+                fat: f.fat,
+                image: f.image,
+                isSystemFood: true
+            },
+            create: {
+                id: f.id,
+                name: f.name,
+                calories: f.calories,
+                protein: f.protein,
+                carbs: f.carbs,
+                fat: f.fat,
+                image: f.image,
+                isSystemFood: true,
+                createdBy: null
+            }
+        });
+    }
+
+    // --- ACHIEVEMENTS ---
+    console.log('Seeding Achievements...');
+    for (const ach of ACHIEVEMENTS) {
+        await prisma.achievement.upsert({
+            where: { id: ach.id },
+            update: {},
+            create: ach
+        });
+    }
+
+    // --- SEED PROGRAMS ---
+    console.log('Seeding Programs...');
+    const PROGRAMS = [
+        {
+            id: 'prog-1',
+            title: 'Fat Loss Beginner',
+            description: '4-week program to burn fat and build stamina.',
+            duration: 4, // weeks
+            difficulty: 'Beginner',
+            goal: 'lose_weight',
+            isPremium: false,
+            thumbnailUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500'
+        },
+        {
+            id: 'prog-2',
+            title: 'Muscle Builder',
+            description: 'Hypertrophy focused program for muscle gain.',
+            duration: 8,
+            difficulty: 'Intermediate',
+            goal: 'build_muscle',
+            isPremium: true,
+            thumbnailUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500'
+        }
+    ];
+
+    for (const prog of PROGRAMS) {
+        await prisma.workoutProgram.upsert({
+            where: { id: prog.id },
+            update: {},
+            create: prog
+        });
+    }
+
+    // --- SEED RECIPES ---
+    console.log('Seeding Recipes...');
+    const RECIPES = [
+        {
+            id: 'rec-1',
+            title: 'Oatmeal & Berries',
+            description: 'Healthy energy boosting breakfast.',
+            calories: 350,
+            protein: 12,
+            carbs: 60,
+            fat: 6,
+            imageUrl: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=500',
+            ingredients: JSON.stringify(['Oats', 'Blueberries', 'Honey', 'Milk']),
+            instructions: 'Boil milk, add oats, top with berries.',
+            isPremium: false
+        },
+        {
+            id: 'rec-2',
+            title: 'Grilled Chicken Salad',
+            description: 'High protein low carb lunch.',
+            calories: 450,
+            protein: 40,
+            carbs: 10,
+            fat: 20,
+            imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500',
+            ingredients: JSON.stringify(['Chicken Breast', 'Lettuce', 'Olive Oil', 'Tomatoes']),
+            instructions: 'Grill chicken, toss salad.',
+            isPremium: false
+        },
+        {
+            id: 'rec-3',
+            title: 'Keto Avocado Smoothie',
+            description: 'Perfect for keto diet.',
+            calories: 300,
+            protein: 5,
+            carbs: 8,
+            fat: 25,
+            imageUrl: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=500',
+            ingredients: JSON.stringify(['Avocado', 'Spinach', 'Almond Milk', 'Stevia']),
+            instructions: 'Blend all ingredients.',
+            isPremium: true
+        }
+    ];
+
+    for (const rec of RECIPES) {
+        await prisma.recipe.upsert({
+            where: { id: rec.id },
+            update: {},
+            create: rec
+        });
     }
 
     console.log('Seeding finished.');
