@@ -33,6 +33,18 @@ export const getUserAchievements = async (req: Request, res: Response) => {
     }
 };
 
+
+
+export const getAchievementDefinitions = async (req: Request, res: Response) => {
+    try {
+        const achievements = await prisma.achievement.findMany();
+        res.json(achievements);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch achievement definitions' });
+    }
+};
+
 export const checkAndUnlockAchievements = async (userId: string) => {
     try {
         // Get user stats

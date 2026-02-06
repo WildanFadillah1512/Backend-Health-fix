@@ -5,11 +5,20 @@ const prisma = new PrismaClient();
 
 export const logSleep = async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.uid;
+        const { uid } = (req as any).user;
         const { sleepTime, wakeTime, quality, interruptions, notes } = req.body;
 
         if (!sleepTime || !wakeTime) {
             return res.status(400).json({ error: 'Sleep and wake times required' });
+        }
+
+        // Get Prisma user by Firebase UID
+        const user = await prisma.user.findUnique({
+            where: { firebaseUid: uid }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
         const sleep = new Date(sleepTime);
@@ -18,7 +27,7 @@ export const logSleep = async (req: Request, res: Response) => {
 
         const sleepLog = await prisma.sleepLog.create({
             data: {
-                userId,
+                userId: user.id, // Use Prisma User.id
                 sleepTime: sleep,
                 wakeTime: wake,
                 totalHours,
@@ -35,7 +44,7 @@ export const logSleep = async (req: Request, res: Response) => {
         await prisma.dailyStats.upsert({
             where: {
                 userId_date: {
-                    userId,
+                    userId: user.id, // Use Prisma User.id
                     date: dateOfSleep
                 }
             },
@@ -43,7 +52,7 @@ export const logSleep = async (req: Request, res: Response) => {
                 sleep: totalHours
             },
             create: {
-                userId,
+                userId: user.id, // Use Prisma User.id
                 date: dateOfSleep,
                 sleep: totalHours,
                 calories: 0,
@@ -62,11 +71,20 @@ export const logSleep = async (req: Request, res: Response) => {
 
 export const getSleepLogs = async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.uid;
+        const { uid } = (req as any).user;
         const { limit = 30 } = req.query;
 
+        // Get Prisma user by Firebase UID
+        const user = await prisma.user.findUnique({
+            where: { firebaseUid: uid }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         const logs = await prisma.sleepLog.findMany({
-            where: { userId },
+            where: { userId: user.id }, // Use Prisma User.id
             orderBy: { sleepTime: 'desc' },
             take: parseInt(limit as string)
         });

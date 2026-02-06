@@ -409,7 +409,28 @@ async function main() {
         });
     }
 
-    console.log('Seeding finished.');
+    console.log('');
+
+    // --- IMPORT AND RUN NEW COMPREHENSIVE SEEDS ---
+    const { seedRecipes } = await import('./seeds/recipes.seed');
+    const { seedPrograms } = await import('./seeds/programs.seed');
+    const { seedAchievements } = await import('./seeds/achievements.seed');
+    const { seedSystemSettings } = await import('./seeds/systemSettings.seed');
+
+    // Run new comprehensive seeding
+    await seedSystemSettings();
+    console.log('');
+
+    await seedAchievements(); // Will supplement existing basic achievements
+    console.log('');
+
+    await seedRecipes(); // Will supplement existing basic recipes
+    console.log('');
+
+    await seedPrograms(); // Will supplement existing basic programs
+    console.log('');
+
+    console.log('✅ Seeding finished.');
 }
 
 main()

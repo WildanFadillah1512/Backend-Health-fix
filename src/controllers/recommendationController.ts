@@ -85,3 +85,40 @@ export const getRecommendedWorkout = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to get recommendation' });
     }
 };
+
+/**
+ * Mark a recommendation as applied when user starts the recommended workout
+ * This enables feedback loops and recommendation algorithm improvements
+ */
+export const markRecommendationApplied = async (req: Request, res: Response) => {
+    try {
+        const { uid } = (req as any).user;
+        const recommendationId = Array.isArray(req.params.recommendationId)
+            ? req.params.recommendationId[0]
+            : req.params.recommendationId;
+
+        // Get Prisma user
+        const user = await prisma.user.findUnique({
+            where: { firebaseUid: uid }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Update the recommendation
+        const updated = await prisma.workoutRecommendation.update({
+            where: {
+                id: recommendationId
+            },
+            data: {
+                applied: true
+            }
+        });
+
+        res.json({ success: true, recommendation: updated });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to mark recommendation as applied' });
+    }
+};

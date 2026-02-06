@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { calculateCalorieGoal } from '../utils/calorieCalculator';
 
 const prisma = new PrismaClient();
 
@@ -20,6 +21,18 @@ export const syncProfile = async (req: AuthRequest, res: Response) => {
 
         // Use placeholder email if missing to avoid unique constraint violation
         const safeEmail = email || `${uid}@placeholder.com`;
+
+        // Calculate recommended calorie goal
+        const recommendedCalories = calculateCalorieGoal({
+            weight: parsedWeight,
+            height: parsedHeight,
+            age: parsedAge,
+            gender: gender || 'other',
+            activityLevel: activityLevel || 'moderate',
+            goal: goal || 'maintenance'
+        });
+
+        console.log(`📊 Calculated calorie goal: ${recommendedCalories} calories/day`);
 
         const user = await prisma.user.upsert({
             where: { firebaseUid: uid },
@@ -51,7 +64,8 @@ export const syncProfile = async (req: AuthRequest, res: Response) => {
                     create: {
                         weightUnit: 'kg',
                         heightUnit: 'cm',
-                        theme: 'dark'
+                        theme: 'dark',
+                        calorieGoal: recommendedCalories // Set calculated goal
                     }
                 }
             },

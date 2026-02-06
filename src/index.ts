@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import path from 'path';
 
 dotenv.config();
 
@@ -11,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Basic Health Check
 app.get('/', (req, res) => {
@@ -30,6 +34,7 @@ import sleepRoutes from './routes/sleepRoutes';
 import measurementRoutes from './routes/measurementRoutes';
 import programRoutes from './routes/programRoutes';
 import recipeRoutes from './routes/recipeRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 // Routes
 app.use('/api/user', userRoutes);
@@ -45,6 +50,7 @@ app.use('/api/sleep', sleepRoutes);
 app.use('/api/measurements', measurementRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/recipes', recipeRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Initialize Scheduler
 import { initScheduler } from './services/scheduler';
